@@ -1,6 +1,11 @@
 package com.jetbrains.kmpapp.screens.detail
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -58,11 +63,41 @@ fun DetailScreen(
     val viewModel = koinViewModel<DetailViewModel>()
 
     val obj by viewModel.getObject(objectId).collectAsStateWithLifecycle(initialValue = null)
-    AnimatedContent(obj != null) { objectAvailable ->
-        if (objectAvailable) {
-            ObjectDetails(obj!!, onBackClick = navigateBack)
-        } else {
-            EmptyScreenContent(Modifier.fillMaxSize())
+    Scaffold(
+        topBar = {
+            @OptIn(ExperimentalMaterial3Api::class)
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = navigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back))
+                    }
+                }
+            )
+        },
+    ) { paddingValues ->
+        AnimatedContent(
+            targetState = obj,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(220, delayMillis = 90))
+                    .togetherWith(fadeOut(animationSpec = tween(90)))
+            },
+            contentKey = { it != null }
+        ) { museumObject ->
+            if (museumObject != null) {
+                ObjectDetails(
+                    obj = museumObject,
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .fillMaxSize()
+                )
+            } else {
+                EmptyScreenContent(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -70,50 +105,33 @@ fun DetailScreen(
 @Composable
 private fun ObjectDetails(
     obj: MuseumObject,
-    onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back))
-                    }
-                }
-            )
-        },
-        modifier = modifier.windowInsetsPadding(WindowInsets.systemBars),
-    ) { paddingValues ->
-        Column(
-            Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(paddingValues)
-        ) {
-            AsyncImage(
-                model = obj.primaryImageSmall,
-                contentDescription = obj.title,
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.LightGray)
-            )
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+    ) {
+        AsyncImage(
+            model = obj.primaryImageSmall,
+            contentDescription = obj.title,
+            contentScale = ContentScale.FillWidth,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.LightGray)
+        )
 
-            SelectionContainer {
-                Column(Modifier.padding(12.dp)) {
-                    Text(obj.title, style = MaterialTheme.typography.headlineMedium)
-                    Spacer(Modifier.height(6.dp))
-                    LabeledInfo(stringResource(Res.string.label_title), obj.title)
-                    LabeledInfo(stringResource(Res.string.label_artist), obj.artistDisplayName)
-                    LabeledInfo(stringResource(Res.string.label_date), obj.objectDate)
-                    LabeledInfo(stringResource(Res.string.label_dimensions), obj.dimensions)
-                    LabeledInfo(stringResource(Res.string.label_medium), obj.medium)
-                    LabeledInfo(stringResource(Res.string.label_department), obj.department)
-                    LabeledInfo(stringResource(Res.string.label_repository), obj.repository)
-                    LabeledInfo(stringResource(Res.string.label_credits), obj.creditLine)
-                }
+        SelectionContainer {
+            Column(Modifier.padding(12.dp)) {
+                Text(obj.title, style = MaterialTheme.typography.headlineMedium)
+                Spacer(Modifier.height(6.dp))
+                LabeledInfo(stringResource(Res.string.label_title), obj.title)
+                LabeledInfo(stringResource(Res.string.label_artist), obj.artistDisplayName)
+                LabeledInfo(stringResource(Res.string.label_date), obj.objectDate)
+                LabeledInfo(stringResource(Res.string.label_dimensions), obj.dimensions)
+                LabeledInfo(stringResource(Res.string.label_medium), obj.medium)
+                LabeledInfo(stringResource(Res.string.label_department), obj.department)
+                LabeledInfo(stringResource(Res.string.label_repository), obj.repository)
+                LabeledInfo(stringResource(Res.string.label_credits), obj.creditLine)
             }
         }
     }
